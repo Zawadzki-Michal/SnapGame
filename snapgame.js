@@ -1,4 +1,4 @@
-import { Deck, Card } from "./deck.js";
+import Deck from "./deck.js";
 import Player from "./player.js";
 
 // Class to represent a Snap game
