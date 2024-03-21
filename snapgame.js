@@ -1,4 +1,4 @@
-import Deck from "./deck.js";
+import { Deck } from "./deck.js";
 import Player from "./player.js";
 
 class SnapGame {
@@ -7,64 +7,44 @@ class SnapGame {
     this.numDecks = numDecks;
     this.matchType = matchType;
     this.numRounds = numRounds;
-    this.scores = new Array(numPlayers).fill(0);
+    this.players = [];
+    this.tableCards = [];
     this.round = 0;
+    this.scores = new Array(this.numPlayers).fill(0);
   }
 
   startGame() {
+    // Create and shuffle deck
     const deck = new Deck(this.numDecks);
     deck.shuffleCards();
 
-    const players = [];
+    // Create players
     for (let i = 0; i < this.numPlayers; i++) {
       const player = new Player(`Player ${i + 1}`);
-      players.push(player);
+      this.players.push(player);
     }
 
-    let currentPlayerIndex = 0;
-    while (deck.cards.length > 0 && currentPlayerIndex < this.numPlayers) {
-      for (
-        let j = 0;
-        j < Math.floor(deck.cards.length / this.numPlayers);
-        j++
-      ) {
-        players[currentPlayerIndex].addCardToHand(deck.dealCard());
-        currentPlayerIndex = (currentPlayerIndex + 1) % this.numPlayers;
-      }
+    // Deal cards to players and remaining cards to the table
+    this.tableCards = deck.dealToPlayers(this.players);
 
-      if (deck.cards.length > 0) {
-        const remainingPlayer = players[currentPlayerIndex];
-        remainingPlayer.addCardToHand(deck.dealCard());
-      }
-
-      currentPlayerIndex = (currentPlayerIndex + 1) % this.numPlayers;
-    }
-
-    console.log("\nInitial hands:");
-    players.forEach((player) => {
-      console.log(
-        `${player.getName()}'s hand:`,
-        player.hand.map((card) => card.getName())
-      );
-    });
-
-    this.playRound(players);
+    // Start playing rounds
+    this.playRound();
   }
 
-  playRound(players) {
+  playRound() {
     this.round++;
 
     const snapButton = document.createElement("button");
     snapButton.textContent = "SNAP";
     snapButton.addEventListener("click", () => {
-      this.handleSnap(players);
-      this.nextRound(players);
+      this.handleSnap();
+      this.nextRound();
     });
 
     const continueButton = document.createElement("button");
     continueButton.textContent = "Continue";
     continueButton.addEventListener("click", () => {
-      this.nextRound(players);
+      this.nextRound();
     });
 
     const promptWindow = document.createElement("div");
@@ -75,69 +55,69 @@ class SnapGame {
 
     console.log(`\nRound ${this.round}`);
 
-    players.forEach((player) => {
+    this.players.forEach((player) => {
       console.log(`\nPlayer turn: ${player.getName()}`);
-      player.playTurn();
+      player.playTurn(this.tableCards[this.tableCards.length - 1]); // Pass the table card to the player's playTurn method
     });
 
-    players.forEach((player, index) => {
-      const score = player.getHandSize();
-      this.scores[index] += score;
-    });
+    this.handleSnap(); // Check for snap after all players have played their turn
+    this.tableCards = []; // Reset table cards for the next round
   }
 
-  nextRound(players) {
+  handleSnap() {
+    const lastPlayedCard = this.tableCards[this.tableCards.length - 1];
+    const previousCard = this.tableCards[this.tableCards.length - 2]; // Get the previous card
+
+    if (previousCard) {
+      // Check if previousCard exists
+      const snapPlayers = this.players.filter((player) =>
+        player
+          .getLastPlayedCard()
+          ?.matches(lastPlayedCard, previousCard, this.matchType)
+      );
+
+      if (snapPlayers.length > 1) {
+        const snapPlayer = snapPlayers[snapPlayers.length - 1];
+        console.log(
+          `SNAP! ${snapPlayer.getName()} wins the round and takes the cards.`
+        );
+        snapPlayers.forEach((player) => {
+          snapPlayer.collectPile(player.getPile());
+        });
+      }
+    }
+  }
+  nextRound() {
     const promptWindow = document.querySelector("div");
     document.body.removeChild(promptWindow);
 
     if (this.round < this.numRounds) {
-      this.playRound(players);
+      this.playRound();
     } else {
       this.endGame();
     }
   }
 
-  handleSnap(players) {
-    const currentPlayerIndex = (this.round - 1) % this.numPlayers;
-    const previousPlayerIndex =
-      (currentPlayerIndex + this.numPlayers - 1) % this.numPlayers;
-
-    const currentPlayer = players[currentPlayerIndex];
-    const previousPlayer = players[previousPlayerIndex];
-
-    const currentCard = currentPlayer.getLastPlayedCard();
-    const previousCard = previousPlayer.getLastPlayedCard();
-
-    if (currentCard && previousCard && this.cardsMatch(currentCard, previousCard)) {
-      console.log(`SNAP! ${currentPlayer.getName()} wins both piles!`);
-      currentPlayer.addToPile(previousPlayer.getPile());
-    } else {
-      console.log("No snap!");
-    }
-}
-
-cardsMatch(card1, card2) {
-    if (this.matchType === "faceOnly") {
-      return card1.value === card2.value;
-    } else if (this.matchType === "faceAndSuit") {
-      return card1.value === card2.value && card1.suit === card2.suit;
-    } else {
-      throw new Error("Invalid match type provided.");
-    }
-  }
-
   endGame() {
-    console.log("\nNo players have cards left. Game over!");
+    console.log("\nGame over!");
 
-    const maxScore = Math.max(...this.scores);
-    const winningPlayers = this.scores
-      .map((score, index) => (score === maxScore ? index + 1 : -1))
-      .filter((index) => index !== -1)
-      .map((index) => `Player ${index}`);
+    // Calculate scores
+    const scores = this.players.map((player) => player.getHandSize());
+    const maxScore = Math.max(...scores);
 
-    console.log(
-      `${winningPlayers.join(" and ")} win(s) the game with ${maxScore} points!`
+    // Determine winners
+    const winners = this.players.filter(
+      (player, index) => scores[index] === maxScore
     );
+
+    // Display winner(s)
+    if (winners.length === 1) {
+      console.log(
+        `${winners[0].getName()} wins the game with ${maxScore} cards!`
+      );
+    } else {
+      console.log("It's a tie!");
+    }
   }
 }
 

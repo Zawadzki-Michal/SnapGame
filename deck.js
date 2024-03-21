@@ -15,15 +15,7 @@ const values = [
   "A",
 ];
 
-
-/*
-** Deck Class:
-- Constructor: Initializes a new deck with a specified number of decks (default is 1).
-- shuffleCards(): Shuffles the cards in the deck.
-- dealCard(): Deals a card from the deck. If the deck is empty, it throws an error.
-*/
-
-export default class Deck {
+class Deck {
   constructor(numDecks = 1) {
     this.cards = freshDeck(numDecks);
   }
@@ -42,6 +34,27 @@ export default class Deck {
       throw new Error("No cards left in the deck.");
     }
     return this.cards.pop();
+  }
+
+  // Function to distribute cards between players and place remaining cards on the table
+  dealToPlayers(players) {
+    const numPlayers = players.length;
+    const numCardsPerPlayer = Math.floor(this.cards.length / numPlayers);
+    const remainingCards = this.cards.length % numPlayers;
+
+    for (let i = 0; i < numPlayers; i++) {
+      for (let j = 0; j < numCardsPerPlayer; j++) {
+        players[i].receiveCard(this.dealCard());
+      }
+    }
+
+    // Place remaining cards on the table
+    const tableCards = [];
+    for (let i = 0; i < remainingCards; i++) {
+      tableCards.push(this.dealCard());
+    }
+
+    return tableCards;
   }
 }
 
@@ -64,25 +77,26 @@ class Card {
     this.suit = suit;
     this.value = value;
   }
+
   isEqual(otherCard) {
     return this.value === otherCard.value;
-}
-
+  }
 
   getName() {
     return `${this.value} of ${this.suit}`;
   }
 
-  matches(otherCard, matchType) {
-    if (!["faceOnly", "faceAndSuit"].includes(matchType)) {
-      throw new Error("Invalid match type provided.");
+  matches(otherCard, previousCard, matchType) {
+    matchType = matchType.toLowerCase(); // Convert matchType to lowercase for case insensitivity
+    if (!["faceonly", "faceandsuit"].includes(matchType)) {
+      throw new Error("Invalid match type provided. Please enter 'faceOnly' or 'faceAndSuit'.");
     }
-    if (matchType === "faceOnly") {
-      return this.value === otherCard.value;
-    } else if (matchType === "faceAndSuit") {
-      return this.value === otherCard.value && this.suit === otherCard.suit;
-    } else {
-      throw new Error("Invalid match type provided.");
+    if (matchType === "faceonly") {
+      return this.value === otherCard.value && this.value === previousCard.value;
+    } else if (matchType === "faceandsuit") {
+      return this.value === otherCard.value && this.value === previousCard.value && this.suit === otherCard.suit && this.suit === previousCard.suit;
     }
   }
 }
+
+export { Deck, Card };
