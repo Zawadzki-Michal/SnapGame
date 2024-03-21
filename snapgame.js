@@ -1,6 +1,7 @@
-import { Deck } from "./deck.js";
+import { Deck, Card } from "./deck.js";
 import Player from "./player.js";
 
+// Class to represent a Snap game
 class SnapGame {
   constructor(numPlayers, numDecks, matchType, numRounds) {
     this.numPlayers = numPlayers;
@@ -30,7 +31,7 @@ class SnapGame {
     // Start playing rounds
     this.playRound();
   }
-
+// Function to play a round
   playRound() {
     this.round++;
 
@@ -63,7 +64,7 @@ class SnapGame {
     this.handleSnap(); // Check for snap after all players have played their turn
     this.tableCards = []; // Reset table cards for the next round
   }
-
+// Function to handle a snap
   handleSnap() {
     const lastPlayedCard = this.tableCards[this.tableCards.length - 1];
     const previousCard = this.tableCards[this.tableCards.length - 2]; // Get the previous card
@@ -87,6 +88,7 @@ class SnapGame {
       }
     }
   }
+  // Function to proceed to the next round
   nextRound() {
     const promptWindow = document.querySelector("div");
     document.body.removeChild(promptWindow);
@@ -98,6 +100,7 @@ class SnapGame {
     }
   }
 
+  // Function to end the game
   endGame() {
     console.log("\nGame over!");
 

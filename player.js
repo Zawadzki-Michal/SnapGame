@@ -1,3 +1,4 @@
+// Purpose: Player class to represent a player in the game
 class Player {
   constructor(name) {
     this.name = name;
@@ -5,14 +6,17 @@ class Player {
     this.pile = [];
   }
 
+// Function to get the name of the player
   getName() {
     return this.name;
   }
 
+// Function to add a card to the player's hand
   addCardToHand(card) {
     this.hand.push(card);
   }
 
+// Function to play a turn
   playTurn() {
     const playedCard = this.hand.pop();
     if (playedCard) {
@@ -22,15 +26,16 @@ class Player {
       console.log(`${this.name} has no cards left to play.`);
     }
   }
-
+// Function to check if the player has any cards left
   addToPile(card) {
     this.pile.push(card);
   }
-
-  getHandSize() {
-    return this.hand.length;
+// Function to check if the player has any cards left
+    getHandSize() {
+      return this.hand.length;
   }
 
+// Function to check if the player has any cards left
   getLastPlayedCard() {
     if (this.pile.length > 0) {
       return this.pile[this.pile.length - 1];

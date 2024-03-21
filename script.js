@@ -27,6 +27,7 @@ function startGame() {
     return;
   }
 
+  // Get user input for match type
   let matchType;
   while (true) {
     matchType = prompt("Enter match type (faceOnly or faceAndSuit): ").toLowerCase();
